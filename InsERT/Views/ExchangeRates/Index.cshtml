@@ -1,0 +1,82 @@
+﻿@model InsERT.Models.ExchangeRate
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Kursy Wymiany na dzień @Model.EffectiveDate.ToShortDateString()</h1>
+
+        <table class="table table-striped table-bordered mt-4">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Waluta</th>
+                    <th>Kurs Średni</th>
+                    <!-- Dodaj inne nagłówki, jeśli są dostępne -->
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rate in Model.Rates)
+                {
+                    <tr>
+                        <td>
+                            @rate.CurrencyCode
+                        </td>
+                        <td class="mid-cell" data-currency-code="@rate.CurrencyCode">
+                            @rate.Mid
+                            <div class="last-rates-tooltip" style="display:none;"></div>
+                        </td>
+                        <!-- Dodaj inne pola, jeśli są dostępne -->
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('.mid-cell').hover(async function () {
+                var currencyCode = $(this).data('currency-code');
+                var tooltip = $(this).find('.last-rates-tooltip');
+
+                try {
+                    var response = await fetch('/getLast5?currencyCode=' + currencyCode);
+                    var data = await response.json();
+
+                    if (data && data.length > 0) {
+                        var ratesHtml = '<ul>';
+                        data.forEach(function (rate) {
+                            ratesHtml += '<li>' + rate + '</li>';
+                        });
+                        ratesHtml += '</ul>';
+
+                        tooltip.html('5 ostatnich kursów dla ' + currencyCode + ': ' + ratesHtml);
+                        tooltip.show();
+                    } else {
+                        tooltip.html('Brak dostępnych danych.');
+                        tooltip.show();
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }, function () {
+                $(this).find('.last-rates-tooltip').hide();
+            });
+        });
+    </script>
+
+</body>
+</html>
